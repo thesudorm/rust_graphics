@@ -5,8 +5,14 @@ use nalgebra as na;
 
 type Point2 = na::Point2<f32>;
 
+enum Shape {
+    Circle(mint::Point2<f32>, f32),
+    Rectangle(graphics::Rect),
+}
+
 struct State {
     dt: std::time::Duration,
+    shapes: Vec<Shape>,
 }
 
 impl ggez::event::EventHandler for State {
@@ -22,6 +28,23 @@ impl ggez::event::EventHandler for State {
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
         graphics::clear(ctx, graphics::BLACK);
+
+        // Drawing shapes from state
+        {
+            for shape in &self.shapes {
+                let mesh = match shape {
+                    &Shape::Rectangle(rect) => {
+                        graphics::Mesh::new_rectangle(ctx, graphics::DrawMode::fill(), rect, graphics::WHITE)?
+                    }
+                    &Shape::Circle(origin, radius) => {
+                        graphics::Mesh::new_circle(ctx, graphics::DrawMode::fill(), origin, radius, 0.1, graphics::WHITE)?
+                    }
+                };
+
+                graphics::draw(ctx, &mesh, graphics::DrawParam::default())?;
+            }
+
+        }
 
         // Shapes
         {
@@ -63,8 +86,22 @@ impl ggez::event::EventHandler for State {
 }
 
 fn main() {
+    let mut shapes = Vec::new();
+    shapes.push(Shape::Rectangle(ggez::graphics::Rect::new(
+        10.0,
+        10.0,
+        50.0,
+        100.0,
+    )));
+
+    shapes.push(Shape::Circle(
+        mint::Point2{x: 400.0, y: 40.0},
+        30.0
+    ));
+
     let state = &mut State { 
         dt: std::time::Duration::new(0,0),
+        shapes: shapes,
     };
 
     let ws = WindowSetup {
