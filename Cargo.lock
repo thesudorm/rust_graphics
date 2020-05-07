@@ -849,6 +849,7 @@ name = "hello_ggez"
 version = "0.1.0"
 dependencies = [
  "ggez",
+ "rand 0.4.6",
 ]
 
 [[package]]

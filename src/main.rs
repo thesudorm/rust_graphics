@@ -1,3 +1,6 @@
+extern crate rand;
+
+use rand::{thread_rng, Rng};
 use ggez::*;
 use ggez::conf::*;
 
@@ -13,6 +16,7 @@ enum Shape {
 struct State {
     dt: std::time::Duration,
     shapes: Vec<Shape>,
+    colors: Vec<graphics::Color>
 }
 
 impl ggez::event::EventHandler for State {
@@ -31,42 +35,18 @@ impl ggez::event::EventHandler for State {
 
         // Drawing shapes from state
         {
-            for shape in &self.shapes {
+            for (shape, color) in self.shapes.iter().zip(self.colors.iter()) {
                 let mesh = match shape {
                     &Shape::Rectangle(rect) => {
-                        graphics::Mesh::new_rectangle(ctx, graphics::DrawMode::fill(), rect, graphics::WHITE)?
+                        graphics::Mesh::new_rectangle(ctx, graphics::DrawMode::fill(), rect, color.clone())?
                     }
                     &Shape::Circle(origin, radius) => {
-                        graphics::Mesh::new_circle(ctx, graphics::DrawMode::fill(), origin, radius, 0.1, graphics::WHITE)?
+                        graphics::Mesh::new_circle(ctx, graphics::DrawMode::fill(), origin, radius, 0.1, color.clone())?
                     }
                 };
 
                 graphics::draw(ctx, &mesh, graphics::DrawParam::default())?;
             }
-
-        }
-
-        // Shapes
-        {
-            // My first shape
-            let circle = graphics::Mesh::new_circle(
-                ctx,
-                graphics::DrawMode::fill(),
-                mint::Point2{x: 200.0, y: 300.0},
-                100.0,
-                0.1,
-                graphics::WHITE
-            )?;
-            
-            let rectangle = graphics::Mesh::new_rectangle(
-                ctx, 
-                graphics::DrawMode::fill(),
-                graphics::Rect::new(500.0, 250.0, 200.0, 200.0),
-                graphics::WHITE,
-            )?;
-
-            graphics::draw(ctx, &circle, graphics::DrawParam::default())?;
-            graphics::draw(ctx, &rectangle, graphics::DrawParam::default())?;
 
         }
 
@@ -87,21 +67,37 @@ impl ggez::event::EventHandler for State {
 
 fn main() {
     let mut shapes = Vec::new();
-    shapes.push(Shape::Rectangle(ggez::graphics::Rect::new(
-        10.0,
-        10.0,
-        50.0,
-        100.0,
-    )));
+    let mut colors = Vec::new();
 
-    shapes.push(Shape::Circle(
-        mint::Point2{x: 400.0, y: 40.0},
-        30.0
-    ));
+    for _ in 0..8 {
+        colors.push(graphics::Color::from_rgb(
+            thread_rng().gen_range(0,255),
+            thread_rng().gen_range(0,255),
+            thread_rng().gen_range(0,255)));
+
+        if thread_rng().gen_range(0,2) % 2 == 0 {
+            shapes.push(Shape::Rectangle(ggez::graphics::Rect::new(
+                thread_rng().gen_range(0.0, 800.0),
+                thread_rng().gen_range(0.0, 600.0),
+                thread_rng().gen_range(0.0, 800.0),
+                thread_rng().gen_range(0.0, 600.0),
+            )));
+        } else {
+            shapes.push(Shape::Circle(
+                mint::Point2{
+                    x: thread_rng().gen_range(0.0, 800.0),
+                    y: thread_rng().gen_range(0.0, 800.0)
+                },
+                thread_rng().gen_range(0.0, 300.0)
+            ));
+        }
+    }
+
 
     let state = &mut State { 
         dt: std::time::Duration::new(0,0),
         shapes: shapes,
+        colors: colors
     };
 
     let ws = WindowSetup {
