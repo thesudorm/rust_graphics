@@ -15,16 +15,25 @@ enum Shape {
 
 struct State {
     dt: std::time::Duration,
+    start: std::time::Instant,
     shapes: Vec<Shape>,
     colors: Vec<graphics::Color>
 }
 
 impl ggez::event::EventHandler for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
-        const TARGET_FPS: u32 = 60;
+        const TARGET_FPS: u32 = 30;
 
         while timer::check_update_time(ctx, TARGET_FPS){
             self.dt = timer::delta(ctx);
+        }
+
+        if self.start.elapsed().as_secs() >= 3 {
+            self.start = std::time::Instant::now();
+            self.shapes = Vec::new();
+
+            self.shapes = generate_random_shapes();
+            self.colors = generate_random_colors();
         }
 
         Ok(())
@@ -66,38 +75,12 @@ impl ggez::event::EventHandler for State {
 }
 
 fn main() {
-    let mut shapes = Vec::new();
-    let mut colors = Vec::new();
-
-    for _ in 0..8 {
-        colors.push(graphics::Color::from_rgb(
-            thread_rng().gen_range(0,255),
-            thread_rng().gen_range(0,255),
-            thread_rng().gen_range(0,255)));
-
-        if thread_rng().gen_range(0,2) % 2 == 0 {
-            shapes.push(Shape::Rectangle(ggez::graphics::Rect::new(
-                thread_rng().gen_range(0.0, 800.0),
-                thread_rng().gen_range(0.0, 600.0),
-                thread_rng().gen_range(0.0, 800.0),
-                thread_rng().gen_range(0.0, 600.0),
-            )));
-        } else {
-            shapes.push(Shape::Circle(
-                mint::Point2{
-                    x: thread_rng().gen_range(0.0, 800.0),
-                    y: thread_rng().gen_range(0.0, 800.0)
-                },
-                thread_rng().gen_range(0.0, 300.0)
-            ));
-        }
-    }
-
 
     let state = &mut State { 
         dt: std::time::Duration::new(0,0),
-        shapes: shapes,
-        colors: colors
+        start: std::time::Instant::now(),
+        shapes: generate_random_shapes(),
+        colors: generate_random_colors()
     };
 
     let ws = WindowSetup {
@@ -121,4 +104,43 @@ fn main() {
         .unwrap();
 
     event::run(ctx, event_loop, state).unwrap();
+}
+
+fn generate_random_shapes() -> Vec<Shape> {
+    let mut shapes = Vec::new();
+
+    for _ in 0..8 {
+        if thread_rng().gen_range(0,2) % 2 == 0 {
+            shapes.push(Shape::Rectangle(ggez::graphics::Rect::new(
+                thread_rng().gen_range(0.0, 800.0),
+                thread_rng().gen_range(0.0, 600.0),
+                thread_rng().gen_range(0.0, 800.0),
+                thread_rng().gen_range(0.0, 600.0),
+            )));
+        } else {
+            shapes.push(Shape::Circle(
+                mint::Point2{
+                    x: thread_rng().gen_range(0.0, 800.0),
+                    y: thread_rng().gen_range(0.0, 800.0)
+                },
+                thread_rng().gen_range(0.0, 300.0)
+            ));
+        }
+    }
+
+    return shapes;
+}
+
+fn generate_random_colors() -> Vec<graphics::Color> {
+
+    let mut colors = Vec::new();
+
+    for _ in 0..8 {
+        colors.push(graphics::Color::from_rgb(
+            thread_rng().gen_range(0,255),
+            thread_rng().gen_range(0,255),
+            thread_rng().gen_range(0,255)));
+    }
+
+    return colors;
 }
