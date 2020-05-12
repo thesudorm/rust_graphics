@@ -39,6 +39,12 @@ impl ggez::event::EventHandler for State {
         Ok(())
     }
 
+    fn mouse_button_up_event(&mut self, ctx: &mut Context, mb: ggez::event::MouseButton, x: f32, y: f32){
+        if mb == ggez::event::MouseButton::Left{
+            self.shapes = generate_random_shapes();
+        }
+    }
+
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
         graphics::clear(ctx, graphics::BLACK);
 
@@ -129,6 +135,15 @@ fn generate_random_shapes() -> Vec<Shape> {
     }
 
     return shapes;
+}
+
+fn make_circle(_x: f32, _y:f32) -> Shape {
+    return Shape::Circle(
+        mint::Point2{
+            x: _x,
+            y: _y
+        },
+        50.0);
 }
 
 fn generate_random_colors() -> Vec<graphics::Color> {
