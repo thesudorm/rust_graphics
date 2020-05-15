@@ -1,6 +1,5 @@
 extern crate rand;
 
-use rand::{thread_rng, Rng};
 use ggez::*;
 use ggez::conf::*;
 
@@ -15,10 +14,12 @@ enum Shape {
 
 struct State {
     dt: std::time::Duration,
-    start: std::time::Instant,
-    shapes: Vec<Shape>,
-    colors: Vec<graphics::Color>
+    pieces: Vec<Shape>
 }
+
+const BOARD_X_POS: f32 = 150.0;
+const BOARD_Y_POS: f32 = 50.0;
+const BOARD_WIDTH: f32 = 500.0;
 
 impl ggez::event::EventHandler for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
@@ -28,20 +29,13 @@ impl ggez::event::EventHandler for State {
             self.dt = timer::delta(ctx);
         }
 
-        if self.start.elapsed().as_secs() >= 3 {
-            self.start = std::time::Instant::now();
-            self.shapes = Vec::new();
-
-            self.shapes = generate_random_shapes();
-            self.colors = generate_random_colors();
-        }
-
         Ok(())
     }
 
-    fn mouse_button_up_event(&mut self, ctx: &mut Context, mb: ggez::event::MouseButton, x: f32, y: f32){
+    fn mouse_button_up_event(&mut self, _ctx: &mut Context, mb: ggez::event::MouseButton, x: f32, y: f32){
         if mb == ggez::event::MouseButton::Left{
-            self.shapes = generate_random_shapes();
+            println!("{}, {}", x, y);
+            self.pieces.push(make_circle(x, y));
         }
     }
 
@@ -50,13 +44,32 @@ impl ggez::event::EventHandler for State {
 
         // Drawing shapes from state
         {
-            for (shape, color) in self.shapes.iter().zip(self.colors.iter()) {
-                let mesh = match shape {
+            // draw board
+            let board = graphics::Rect::new(BOARD_X_POS, BOARD_Y_POS, BOARD_WIDTH, BOARD_WIDTH);
+            let mesh = graphics::Mesh::new_rectangle(ctx, graphics::DrawMode::fill(), board, graphics::WHITE)?;
+            graphics::draw(ctx, &mesh, graphics::DrawParam::default())?;
+
+            for x in 1..8 { // Vertical lines
+                let mut points = Vec::new();
+                points.push(mint::Point2{
+                    x: BOARD_X_POS + (BOARD_WIDTH / 8.0) * x as f32,
+                    y: BOARD_Y_POS
+                });
+                points.push(mint::Point2{
+                    x: BOARD_X_POS + (BOARD_WIDTH / 8.0) * x as f32,
+                    y: BOARD_WIDTH + BOARD_Y_POS
+                });
+                let line = graphics::Mesh::new_line(ctx, &points, 3.0, graphics::BLACK)?;
+                graphics::draw(ctx, &line, graphics::DrawParam::default())?;
+            }
+
+            for piece in &self.pieces {
+                let mesh = match piece {
                     &Shape::Rectangle(rect) => {
-                        graphics::Mesh::new_rectangle(ctx, graphics::DrawMode::fill(), rect, color.clone())?
+                        graphics::Mesh::new_rectangle(ctx, graphics::DrawMode::fill(), rect, graphics::WHITE)?
                     }
                     &Shape::Circle(origin, radius) => {
-                        graphics::Mesh::new_circle(ctx, graphics::DrawMode::fill(), origin, radius, 0.1, color.clone())?
+                        graphics::Mesh::new_circle(ctx, graphics::DrawMode::fill(), origin, radius, 0.1, graphics::BLACK)?
                     }
                 };
 
@@ -84,9 +97,7 @@ fn main() {
 
     let state = &mut State { 
         dt: std::time::Duration::new(0,0),
-        start: std::time::Instant::now(),
-        shapes: generate_random_shapes(),
-        colors: generate_random_colors()
+        pieces: Vec::new(),
     };
 
     let ws = WindowSetup {
@@ -112,50 +123,11 @@ fn main() {
     event::run(ctx, event_loop, state).unwrap();
 }
 
-fn generate_random_shapes() -> Vec<Shape> {
-    let mut shapes = Vec::new();
-
-    for _ in 0..8 {
-        if thread_rng().gen_range(0,2) % 2 == 0 {
-            shapes.push(Shape::Rectangle(ggez::graphics::Rect::new(
-                thread_rng().gen_range(0.0, 800.0),
-                thread_rng().gen_range(0.0, 600.0),
-                thread_rng().gen_range(0.0, 800.0),
-                thread_rng().gen_range(0.0, 600.0),
-            )));
-        } else {
-            shapes.push(Shape::Circle(
-                mint::Point2{
-                    x: thread_rng().gen_range(0.0, 800.0),
-                    y: thread_rng().gen_range(0.0, 800.0)
-                },
-                thread_rng().gen_range(0.0, 300.0)
-            ));
-        }
-    }
-
-    return shapes;
-}
-
 fn make_circle(_x: f32, _y:f32) -> Shape {
     return Shape::Circle(
         mint::Point2{
             x: _x,
             y: _y
         },
-        50.0);
-}
-
-fn generate_random_colors() -> Vec<graphics::Color> {
-
-    let mut colors = Vec::new();
-
-    for _ in 0..8 {
-        colors.push(graphics::Color::from_rgb(
-            thread_rng().gen_range(0,255),
-            thread_rng().gen_range(0,255),
-            thread_rng().gen_range(0,255)));
-    }
-
-    return colors;
+        25.0);
 }
