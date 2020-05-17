@@ -21,6 +21,8 @@ const BOARD_X_POS: f32 = 150.0;
 const BOARD_Y_POS: f32 = 50.0;
 const BOARD_WIDTH: f32 = 500.0;
 
+const BOARD_COLOR: ggez::graphics::Color = ggez::graphics::Color::new(0.05, 0.46, 0.14, 1.0);
+
 impl ggez::event::EventHandler for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         const TARGET_FPS: u32 = 30;
@@ -46,8 +48,22 @@ impl ggez::event::EventHandler for State {
         {
             // draw board
             let board = graphics::Rect::new(BOARD_X_POS, BOARD_Y_POS, BOARD_WIDTH, BOARD_WIDTH);
-            let mesh = graphics::Mesh::new_rectangle(ctx, graphics::DrawMode::fill(), board, graphics::WHITE)?;
+            let mesh = graphics::Mesh::new_rectangle(ctx, graphics::DrawMode::fill(), board, BOARD_COLOR)?;
             graphics::draw(ctx, &mesh, graphics::DrawParam::default())?;
+
+            for x in 1..8 { // Horizontal lines
+                let mut points = Vec::new();
+                points.push(mint::Point2{
+                    x: BOARD_X_POS,
+                    y: BOARD_Y_POS + (BOARD_WIDTH / 8.0) * x as f32,
+                });
+                points.push(mint::Point2{
+                    x: BOARD_X_POS + (BOARD_WIDTH / 8.0) * x as f32 + BOARD_WIDTH,
+                    y: BOARD_Y_POS + (BOARD_WIDTH / 8.0) * x as f32,
+                });
+                let line = graphics::Mesh::new_line(ctx, &points, 3.0, graphics::BLACK)?;
+                graphics::draw(ctx, &line, graphics::DrawParam::default())?;
+            }
 
             for x in 1..8 { // Vertical lines
                 let mut points = Vec::new();
