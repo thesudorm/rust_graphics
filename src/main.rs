@@ -8,8 +8,7 @@ use nalgebra as na;
 type Point2 = na::Point2<f32>;
 
 enum Shape {
-    Circle(mint::Point2<f32>, f32),
-    Rectangle(graphics::Rect),
+    Circle(mint::Point2<f32>, f32)
 }
 
 struct State {
@@ -20,6 +19,7 @@ struct State {
 const BOARD_X_POS: f32 = 150.0;
 const BOARD_Y_POS: f32 = 50.0;
 const BOARD_WIDTH: f32 = 500.0;
+const BOARD_COL_WIDTH: f32 = BOARD_WIDTH / 8.0;
 
 const BOARD_COLOR: ggez::graphics::Color = ggez::graphics::Color::new(0.05, 0.46, 0.14, 1.0);
 
@@ -36,8 +36,31 @@ impl ggez::event::EventHandler for State {
 
     fn mouse_button_up_event(&mut self, _ctx: &mut Context, mb: ggez::event::MouseButton, x: f32, y: f32){
         if mb == ggez::event::MouseButton::Left{
-            println!("{}, {}", x, y);
-            self.pieces.push(make_circle(x, y));
+            if x >= BOARD_X_POS && x <= BOARD_X_POS + BOARD_WIDTH && y >= BOARD_Y_POS && y <= BOARD_Y_POS + BOARD_WIDTH{
+                println!("IN BOARD!");
+                let mut y_pos = BOARD_Y_POS;
+                let mut x_pos = BOARD_X_POS;
+                let mut piece = 0;
+
+                for col in 0..8 {
+                    for row in 0..8 {
+                        if x >= x_pos && x <= x_pos + BOARD_COL_WIDTH && y >= y_pos && y <= y_pos + BOARD_COL_WIDTH {
+                            println!("Placed piece {}", piece);
+
+                            self.pieces.push(Shape::Circle(
+                                mint::Point2{
+                                    x: BOARD_X_POS + BOARD_COL_WIDTH * row as f32 + BOARD_COL_WIDTH / 2.0,
+                                    y: BOARD_Y_POS + BOARD_COL_WIDTH * col as f32 + BOARD_COL_WIDTH / 2.0
+                                },
+                                25.0));
+                        }
+                        piece += 1;
+                        x_pos += BOARD_COL_WIDTH;
+                    }
+                    x_pos = BOARD_X_POS;
+                    y_pos += BOARD_COL_WIDTH;
+                }
+            }
         }
     }
 
@@ -55,11 +78,11 @@ impl ggez::event::EventHandler for State {
                 let mut points = Vec::new();
                 points.push(mint::Point2{
                     x: BOARD_X_POS,
-                    y: BOARD_Y_POS + (BOARD_WIDTH / 8.0) * x as f32,
+                    y: BOARD_Y_POS + BOARD_COL_WIDTH * x as f32,
                 });
                 points.push(mint::Point2{
-                    x: BOARD_X_POS + (BOARD_WIDTH / 8.0) * x as f32 + BOARD_WIDTH,
-                    y: BOARD_Y_POS + (BOARD_WIDTH / 8.0) * x as f32,
+                    x: BOARD_X_POS + BOARD_COL_WIDTH * x as f32 + BOARD_WIDTH,
+                    y: BOARD_Y_POS + BOARD_COL_WIDTH * x as f32,
                 });
                 let line = graphics::Mesh::new_line(ctx, &points, 3.0, graphics::BLACK)?;
                 graphics::draw(ctx, &line, graphics::DrawParam::default())?;
@@ -81,9 +104,6 @@ impl ggez::event::EventHandler for State {
 
             for piece in &self.pieces {
                 let mesh = match piece {
-                    &Shape::Rectangle(rect) => {
-                        graphics::Mesh::new_rectangle(ctx, graphics::DrawMode::fill(), rect, graphics::WHITE)?
-                    }
                     &Shape::Circle(origin, radius) => {
                         graphics::Mesh::new_circle(ctx, graphics::DrawMode::fill(), origin, radius, 0.1, graphics::BLACK)?
                     }
@@ -139,11 +159,3 @@ fn main() {
     event::run(ctx, event_loop, state).unwrap();
 }
 
-fn make_circle(_x: f32, _y:f32) -> Shape {
-    return Shape::Circle(
-        mint::Point2{
-            x: _x,
-            y: _y
-        },
-        25.0);
-}
