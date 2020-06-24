@@ -13,7 +13,10 @@ enum Shape {
 
 struct State {
     dt: std::time::Duration,
-    pieces: Vec<Shape>
+    meshes: Vec<Shape>,
+    pieces: [[i32; 8] ; 8],
+    colors: Vec<ggez::graphics::Color>,
+    is_player1_turn: bool
 }
 
 const BOARD_X_POS: f32 = 150.0;
@@ -46,13 +49,7 @@ impl ggez::event::EventHandler for State {
                     for row in 0..8 {
                         if x >= x_pos && x <= x_pos + BOARD_COL_WIDTH && y >= y_pos && y <= y_pos + BOARD_COL_WIDTH {
                             println!("Placed piece {}", piece);
-
-                            self.pieces.push(Shape::Circle(
-                                mint::Point2{
-                                    x: BOARD_X_POS + BOARD_COL_WIDTH * row as f32 + BOARD_COL_WIDTH / 2.0,
-                                    y: BOARD_Y_POS + BOARD_COL_WIDTH * col as f32 + BOARD_COL_WIDTH / 2.0
-                                },
-                                25.0));
+                            place_piece(self, row, col);
                         }
                         piece += 1;
                         x_pos += BOARD_COL_WIDTH;
@@ -102,10 +99,10 @@ impl ggez::event::EventHandler for State {
                 graphics::draw(ctx, &line, graphics::DrawParam::default())?;
             }
 
-            for piece in &self.pieces {
+            for (piece, color) in self.meshes.iter().zip(self.colors.iter()) {
                 let mesh = match piece {
                     &Shape::Circle(origin, radius) => {
-                        graphics::Mesh::new_circle(ctx, graphics::DrawMode::fill(), origin, radius, 0.1, graphics::BLACK)?
+                        graphics::Mesh::new_circle(ctx, graphics::DrawMode::fill(), origin, radius, 0.1, color.clone())?
                     }
                 };
 
@@ -133,7 +130,10 @@ fn main() {
 
     let state = &mut State { 
         dt: std::time::Duration::new(0,0),
-        pieces: Vec::new(),
+        meshes: Vec::new(),
+        colors: Vec::new(),
+        pieces: [[0;8];8],
+        is_player1_turn: true
     };
 
     let ws = WindowSetup {
@@ -159,3 +159,33 @@ fn main() {
     event::run(ctx, event_loop, state).unwrap();
 }
 
+fn debug_print_board(board: [[i32;8];8]) {
+    for x in board.iter() {
+        for y in x {
+            print!("{} ", y);
+        }
+        println!();
+    }
+}
+
+// Adds piece to pieces array and creates mesh to be drawn
+fn place_piece(state: &mut State, row: usize, col: usize){
+    if state.is_player1_turn {
+        state.pieces[col][row] = 1;
+        state.colors.push(graphics::WHITE);
+    } else {
+        state.pieces[col][row] = 2;
+        state.colors.push(graphics::BLACK);
+    }
+
+    state.is_player1_turn = !state.is_player1_turn;
+
+    debug_print_board(state.pieces);
+
+    state.meshes.push(Shape::Circle(
+        mint::Point2{
+            x: BOARD_X_POS + BOARD_COL_WIDTH * row as f32 + BOARD_COL_WIDTH / 2.0,
+            y: BOARD_Y_POS + BOARD_COL_WIDTH * col as f32 + BOARD_COL_WIDTH / 2.0
+        },
+        25.0));
+}
