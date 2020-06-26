@@ -136,6 +136,12 @@ fn main() {
         is_player1_turn: true
     };
 
+    // Initialize the board
+    place_piece(state, 4, 3);
+    place_piece(state, 3, 3);
+    place_piece(state, 3, 4);
+    place_piece(state, 4, 4);
+
     let ws = WindowSetup {
         title: "Demo".to_owned(),
         vsync: true,
