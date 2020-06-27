@@ -64,7 +64,6 @@ impl ggez::event::EventHandler for State {
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
         graphics::clear(ctx, graphics::BLACK);
 
-        // Drawing shapes from state
         {
             // draw board
             let board = graphics::Rect::new(BOARD_X_POS, BOARD_Y_POS, BOARD_WIDTH, BOARD_WIDTH);
@@ -99,16 +98,18 @@ impl ggez::event::EventHandler for State {
                 graphics::draw(ctx, &line, graphics::DrawParam::default())?;
             }
 
-            for (piece, color) in self.meshes.iter().zip(self.colors.iter()) {
-                let mesh = match piece {
-                    &Shape::Circle(origin, radius) => {
+            let to_draw = convert_board_to_shapes(self.pieces);
+
+            for (shape, color) in to_draw {
+                let mesh = match shape {
+                    Shape::Circle(origin, radius) => {
                         graphics::Mesh::new_circle(ctx, graphics::DrawMode::fill(), origin, radius, 0.1, color.clone())?
                     }
                 };
 
                 graphics::draw(ctx, &mesh, graphics::DrawParam::default())?;
-            }
 
+            }
         }
 
         // GUI
@@ -172,6 +173,8 @@ fn debug_print_board(board: [[i32;8];8]) {
         }
         println!();
     }
+
+    println!();
 }
 
 // Adds piece to pieces array and creates mesh to be drawn
@@ -194,4 +197,30 @@ fn place_piece(state: &mut State, row: usize, col: usize){
             y: BOARD_Y_POS + BOARD_COL_WIDTH * col as f32 + BOARD_COL_WIDTH / 2.0
         },
         25.0));
+}
+
+fn convert_board_to_shapes(board: [[i32;8];8]) -> Vec<(Shape, ggez::graphics::Color)>{
+    let mut to_return = Vec::new();
+    let mut color = ggez::graphics::WHITE;
+
+    for col in 0..8 {
+        for row in 0..8 {
+            if board[col][row] != 0 { // If there is a piece
+                if board[col][row] == 1 {
+                    color = ggez::graphics::WHITE;
+                } else {
+                    color = ggez::graphics::BLACK;
+                }
+
+                to_return.push((Shape::Circle(
+                    mint::Point2{
+                        x: BOARD_X_POS + BOARD_COL_WIDTH * row as f32 + BOARD_COL_WIDTH / 2.0,
+                        y: BOARD_Y_POS + BOARD_COL_WIDTH * col as f32 + BOARD_COL_WIDTH / 2.0
+                    },
+                    25.0), color));
+            }
+        }
+    }
+
+    return to_return;
 }
