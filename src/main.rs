@@ -48,7 +48,12 @@ impl ggez::event::EventHandler for State {
                 for col in 0..8 {
                     for row in 0..8 {
                         if x >= x_pos && x <= x_pos + BOARD_COL_WIDTH && y >= y_pos && y <= y_pos + BOARD_COL_WIDTH {
-                            println!("Placed piece {}", piece);
+                            let result = is_move_legal(self.pieces, self.is_player1_turn, row, col);
+                            if result {
+                                println!("Move LEGAL");
+                            } else {
+                                println!("Move ILLEGAL");
+                            }
                             place_piece(self, row, col);
                         }
                         piece += 1;
@@ -177,7 +182,7 @@ fn debug_print_board(board: [[i32;8];8]) {
     println!();
 }
 
-// Adds piece to pieces array and creates mesh to be drawn
+// Adds piece to pieces array 
 fn place_piece(state: &mut State, row: usize, col: usize){
     if state.is_player1_turn {
         state.pieces[col][row] = 1;
@@ -190,13 +195,6 @@ fn place_piece(state: &mut State, row: usize, col: usize){
     state.is_player1_turn = !state.is_player1_turn;
 
     debug_print_board(state.pieces);
-
-    state.meshes.push(Shape::Circle(
-        mint::Point2{
-            x: BOARD_X_POS + BOARD_COL_WIDTH * row as f32 + BOARD_COL_WIDTH / 2.0,
-            y: BOARD_Y_POS + BOARD_COL_WIDTH * col as f32 + BOARD_COL_WIDTH / 2.0
-        },
-        25.0));
 }
 
 fn convert_board_to_shapes(board: [[i32;8];8]) -> Vec<(Shape, ggez::graphics::Color)>{
@@ -223,4 +221,31 @@ fn convert_board_to_shapes(board: [[i32;8];8]) -> Vec<(Shape, ggez::graphics::Co
     }
 
     return to_return;
+}
+
+fn is_move_legal(board: [[i32;8];8], is_player1_turn: bool, row: usize, col: usize) -> bool {
+    let piece_to_place = match is_player1_turn {
+        true => 1,
+        false => 2
+    };
+
+    let mut found = false;
+    let mut i = 1;
+
+    if board[col][row] == 0 {
+        while !found { // let's check north first
+             if col - i >= 1 && board[col - i][row] != piece_to_place && board[col -1][row] != 0 {
+                 i = i + 1;
+             } else {
+                 found = true;
+             }
+        }
+
+        if board[col - i][row] == piece_to_place && (col - i == 0 || board[col - i - 1][row] == 0){
+            println!("col: {} row: {}", col - i, row);
+            return true;
+        }
+    }
+
+    return false;
 }
