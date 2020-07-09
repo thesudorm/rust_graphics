@@ -233,47 +233,49 @@ fn is_move_legal(board: [[i32;8];8], is_player1_turn: bool, row: usize, col: usi
     let mut i = 1;
 
     if board[col][row] == 0 {
-        return check_north(board, is_player1_turn, row as i32, col as i32, piece_to_place);
+        return check_north(board, row as i32, col as i32, piece_to_place);
     }
 
     return false;
 }
 
-fn check_north(board: [[i32;8];8], is_player1_turn: bool, row: i32, col: i32, piece_to_place: i32) -> bool {
-
+fn check_north(board: [[i32;8];8], row: i32, col: i32, piece_to_place: i32) -> bool {
 
     let iterators = [(-1 as i32, 0 as i32)];
-    let mut col_index = 0;
-    let mut row_index = 0;
 
     for (col_step, row_step) in iterators.iter() {
         let mut found = false;
-        col_index = *col_step;
-        row_index = *row_step;
+
+        let mut col_index = col_step.clone();
+        let mut row_index = row_step.clone();
 
         while !found { // let's check north first
-            if col == 0 {
+            if col + col_index == 0 {
                 found = true;
-                col_index = 0;
+                println!("Col is 0");
             }
-            else if col as i32 + col_index >= 1
+            else if col as i32 + col_index >= 0
                 && board[(col + col_index) as usize][(row + row_index) as usize] != piece_to_place
                 && board[(col + col_index) as usize][(row + row_index) as usize] != 0 {
 
-                    col_index = col_index + col_step;
-                    row_index = row_index + row_step;
+                    col_index += col_step;
+                    row_index += row_step;
             } else {
                 found = true;
             }
         }
 
-        if col == 0 && board[col as usize][row as usize] == piece_to_place {
-            return true;
+        if col == 0 { // Handle all of the cases where we are on the edge of the board
+            if board[(col + col_index) as usize][(row + row_index) as usize] == piece_to_place {
+                return true;
+            }
         }
-        else if board[(col + col_index) as usize][(row + row_index) as usize] == piece_to_place
-            && (board[(col + col_index - col_step) as usize][(row + row_index + row_step) as usize] == 0){
-            return true;
+        else if board[(col + col_index) as usize][(row + row_index) as usize] == piece_to_place {
+                 return true;
         }
+        //else if (board[(col + col_index + col_step) as usize][(row + row_index + row_step) as usize] == 0) {
+                 //return true;
+        //}
     }
 
     return false;
