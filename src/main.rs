@@ -43,7 +43,7 @@ impl ggez::event::EventHandler for State {
                 println!("IN BOARD!");
                 let mut y_pos = BOARD_Y_POS;
                 let mut x_pos = BOARD_X_POS;
-                let mut piece = 0;
+                //let mut piece = 0;
 
                 for col in 0..8 {
                     for row in 0..8 {
@@ -51,12 +51,12 @@ impl ggez::event::EventHandler for State {
                             let result = is_move_legal(self.pieces, self.is_player1_turn, row, col);
                             if result {
                                 println!("Move LEGAL");
+                                place_piece(self, row, col);
                             } else {
                                 println!("Move ILLEGAL");
                             }
-                            place_piece(self, row, col);
                         }
-                        piece += 1;
+                        //piece += 1;
                         x_pos += BOARD_COL_WIDTH;
                     }
                     x_pos = BOARD_X_POS;
@@ -122,7 +122,8 @@ impl ggez::event::EventHandler for State {
             let fps_point = Point2::new(10.0, 10.0);
             let fps_display = graphics::Text::new(timer::fps(ctx).to_string());
 
-            graphics::draw(ctx, &fps_display, (fps_point, 0.0, graphics::WHITE))?;
+            // not sure why, but this is crashing..
+            // graphics::draw(ctx, &fps_display, (fps_point, 0.0, graphics::WHITE))?;
         }
 
         graphics::present(ctx)?;
@@ -229,16 +230,16 @@ fn is_move_legal(board: [[i32;8];8], is_player1_turn: bool, row: usize, col: usi
         false => 2
     };
 
-    let mut found = false;
     let mut i = 1;
 
     if board[col][row] == 0 {
-        return check_north(board, row as i32, col as i32, piece_to_place);
+        return check_direction(board, row as i32, col as i32, piece_to_place, 1, 0) || check_direction(board, row as i32, col as i32, piece_to_place, -1, 0);
     }
 
     return false;
 }
 
+// Gut this to take direction as a kind of parameter
 fn check_north(board: [[i32;8];8], row: i32, col: i32, piece_to_place: i32) -> bool {
 
     let iterators = [(-1 as i32, 0 as i32)];
@@ -265,18 +266,58 @@ fn check_north(board: [[i32;8];8], row: i32, col: i32, piece_to_place: i32) -> b
             }
         }
 
-        if col == 0 { // Handle all of the cases where we are on the edge of the board
-            if board[(col + col_index) as usize][(row + row_index) as usize] == piece_to_place {
-                return true;
-            }
+        println!("{}, {}", col_index, row_index);
+        if col == 0 {  // if col is 0, then there is nothing to check up north. Need to rely on other directions to check if move is valid
+            return true;
         }
-        else if board[(col + col_index) as usize][(row + row_index) as usize] == piece_to_place {
+        // the second condition below to double check that this isn't just the price right next to the piece to be placed. 
+        else if board[(col + col_index) as usize][(row + row_index) as usize] == piece_to_place && (col_index != -1 || row_index != 0) {
                  return true;
+        } else {
+            return false
         }
-        //else if (board[(col + col_index + col_step) as usize][(row + row_index + row_step) as usize] == 0) {
-                 //return true;
-        //}
     }
 
     return false;
+}
+
+fn check_direction(board: [[i32;8];8], row_to_place: i32, col_to_place: i32, piece_to_place: i32, col_direction: i32, row_direction: i32) -> bool {
+
+    let col_step = col_direction;
+    let row_step = row_direction;
+
+    let mut found = false;
+
+    let mut col_index = col_step.clone();
+    let mut row_index = row_step.clone();
+
+    // Do some initial checks that look at the pieces that are placed at the end of the board
+    if col_to_place == 0 && col_step < 0 && row_step == 0 {  // while checking straight north, if we are at 0 we are the northmost spot checking north should pass
+        return true;
+    } else if col_to_place == 7 && col_step > 0 && row_step == 0 {
+        return true;
+    }
+
+    // If none of the edge cases are true, search through the pieces to determine legality
+    while !found { 
+        if col_to_place + col_index == 0 {
+            found = true;
+        }
+        else if col_to_place as i32 + col_index >= 0
+            && board[(col_to_place + col_index) as usize][(row_to_place + row_index) as usize] != piece_to_place
+            && board[(col_to_place + col_index) as usize][(row_to_place + row_index) as usize] != 0 {
+
+                col_index += col_step;
+                row_index += row_step;
+        } else {
+            found = true;
+        }
+    }
+
+    // the second condition below to double check that this isn't just the price right next to the piece to be placed. 
+    if board[(col_to_place + col_index) as usize][(row_to_place + row_index) as usize] == piece_to_place && !(col_index == col_step && row_index == row_step) {
+        return true;
+    } else {
+        return false
+    }
 }
