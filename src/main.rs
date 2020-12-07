@@ -233,49 +233,10 @@ fn is_move_legal(board: [[i32;8];8], is_player1_turn: bool, row: usize, col: usi
     let mut i = 1;
 
     if board[col][row] == 0 {
-        return check_direction(board, row as i32, col as i32, piece_to_place, 1, 0) || check_direction(board, row as i32, col as i32, piece_to_place, -1, 0);
-    }
-
-    return false;
-}
-
-// Gut this to take direction as a kind of parameter
-fn check_north(board: [[i32;8];8], row: i32, col: i32, piece_to_place: i32) -> bool {
-
-    let iterators = [(-1 as i32, 0 as i32)];
-
-    for (col_step, row_step) in iterators.iter() {
-        let mut found = false;
-
-        let mut col_index = col_step.clone();
-        let mut row_index = row_step.clone();
-
-        while !found { // let's check north first
-            if col + col_index == 0 {
-                found = true;
-                println!("Col is 0");
-            }
-            else if col as i32 + col_index >= 0
-                && board[(col + col_index) as usize][(row + row_index) as usize] != piece_to_place
-                && board[(col + col_index) as usize][(row + row_index) as usize] != 0 {
-
-                    col_index += col_step;
-                    row_index += row_step;
-            } else {
-                found = true;
-            }
-        }
-
-        println!("{}, {}", col_index, row_index);
-        if col == 0 {  // if col is 0, then there is nothing to check up north. Need to rely on other directions to check if move is valid
-            return true;
-        }
-        // the second condition below to double check that this isn't just the price right next to the piece to be placed. 
-        else if board[(col + col_index) as usize][(row + row_index) as usize] == piece_to_place && (col_index != -1 || row_index != 0) {
-                 return true;
-        } else {
-            return false
-        }
+        return check_direction(board, row as i32, col as i32, piece_to_place, 1, 0) 
+               || check_direction(board, row as i32, col as i32, piece_to_place, -1, 0)
+               || check_direction(board, row as i32, col as i32, piece_to_place, 0, 1)
+               || check_direction(board, row as i32, col as i32, piece_to_place, 0, -1);
     }
 
     return false;
@@ -298,6 +259,12 @@ fn check_direction(board: [[i32;8];8], row_to_place: i32, col_to_place: i32, pie
         return true;
     }
 
+    if row_to_place == 0 && row_step < 0 {
+        return true;
+    } else if row_to_place == 7 && row_step > 0 {
+        return true;
+    }
+
     // If none of the edge cases are true, search through the pieces to determine legality
     while !found { 
         if col_to_place + col_index == 0 {
@@ -306,7 +273,6 @@ fn check_direction(board: [[i32;8];8], row_to_place: i32, col_to_place: i32, pie
         else if col_to_place as i32 + col_index >= 0
             && board[(col_to_place + col_index) as usize][(row_to_place + row_index) as usize] != piece_to_place
             && board[(col_to_place + col_index) as usize][(row_to_place + row_index) as usize] != 0 {
-
                 col_index += col_step;
                 row_index += row_step;
         } else {
