@@ -8,4 +8,5 @@ edition = "2018"
 
 [dependencies]
 ggez = "0.5"
+# ggez = { git = "https://github.com/ggez/ggez", branch = "devel" }
 rand = "0.4.2"

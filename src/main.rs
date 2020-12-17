@@ -169,6 +169,8 @@ fn main() {
         .build()
         .unwrap();
 
+    // Currently there is a bug in winit that causes this to fail.
+    // Can either attempt to run off of devel branch of ggez or downgrade rust to 1.47
     event::run(ctx, event_loop, state).unwrap();
 }
 
