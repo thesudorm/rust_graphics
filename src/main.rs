@@ -235,10 +235,14 @@ fn is_move_legal(board: [[i32;8];8], is_player1_turn: bool, row: usize, col: usi
     let mut i = 1;
 
     if board[col][row] == 0 {
-        return check_direction(board, row as i32, col as i32, piece_to_place, 1, 0) 
-               || check_direction(board, row as i32, col as i32, piece_to_place, -1, 0)
-               || check_direction(board, row as i32, col as i32, piece_to_place, 0, 1)
-               || check_direction(board, row as i32, col as i32, piece_to_place, 0, -1);
+        return    check_direction(board, row as i32, col as i32, piece_to_place, 1, 0)      //North
+               || check_direction(board, row as i32, col as i32, piece_to_place, 1, 1)      // North East
+               || check_direction(board, row as i32, col as i32, piece_to_place, 1, -1)     // North West
+               || check_direction(board, row as i32, col as i32, piece_to_place, -1, 0)     // South
+               || check_direction(board, row as i32, col as i32, piece_to_place, -1, -1)    // South West
+               || check_direction(board, row as i32, col as i32, piece_to_place, -1, 1)     // South East
+               || check_direction(board, row as i32, col as i32, piece_to_place, 0, 1)      // East
+               || check_direction(board, row as i32, col as i32, piece_to_place, 0, -1);    // West
     }
 
     return false;
@@ -254,18 +258,6 @@ fn check_direction(board: [[i32;8];8], row_to_place: i32, col_to_place: i32, pie
     let mut col_index = col_step.clone();
     let mut row_index = row_step.clone();
 
-    // Do some initial checks that look at the pieces that are placed at the end of the board
-    if col_to_place == 0 && col_step < 0 && row_step == 0 {  // while checking straight north, if we are at 0 we are the northmost spot checking north should pass
-        return true;
-    } else if col_to_place == 7 && col_step > 0 && row_step == 0 {
-        return true;
-    }
-
-    if row_to_place == 0 && row_step < 0 {
-        return true;
-    } else if row_to_place == 7 && row_step > 0 {
-        return true;
-    }
 
     // If none of the edge cases are true, search through the pieces to determine legality
     while !found { 
@@ -280,6 +272,20 @@ fn check_direction(board: [[i32;8];8], row_to_place: i32, col_to_place: i32, pie
         } else {
             found = true;
         }
+    }
+
+    // Once we find pieces that make this a legal move, now check some edge cases that should be legal.
+    // This is flawed bc it does not look to see if there are pieces next to this piece to make this a legal move.. Need to ensure that there are pieces around first.
+    if col_to_place == 0 && col_step < 0 && row_step == 0 {
+        return true;
+    } else if col_to_place == 7 && col_step > 0 && row_step == 0 {
+        return true;
+    }
+
+    if row_to_place == 0 && row_step < 0 {
+        return true;
+    } else if row_to_place == 7 && row_step > 0 {
+        return true;
     }
 
     // the second condition below to double check that this isn't just the price right next to the piece to be placed. 
